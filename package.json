@@ -1,0 +1,31 @@
+{
+  "name": "mobr_main_page_with_backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/isakhalin/mobr_main_page_with_backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/isakhalin/mobr_main_page_with_backend/issues"
+  },
+  "homepage": "https://github.com/isakhalin/mobr_main_page_with_backend#readme",
+  "dependencies": {
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "nodemon": "^2.0.19"
+  }
+}
