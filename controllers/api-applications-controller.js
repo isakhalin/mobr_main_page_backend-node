@@ -16,3 +16,38 @@ export const getAllApplications = (req, res) => {
         })
         .catch((error) => handleError(res, error))
 };
+
+export const postApplication = (req, res) => {
+    const {
+        dept,
+        firstName,
+        //isComplete,
+        isMinobr,
+        lastName,
+        middleName,
+        org,
+        phoneNumber,
+        phoneNumberMobile,
+        position,
+        prevOrg,
+        room
+    } = req.body;
+    const application = new Application({
+        dept,
+        firstName,
+        isComplete: false,
+        isMinobr,
+        lastName,
+        middleName,
+        org,
+        phoneNumber,
+        phoneNumberMobile,
+        position,
+        prevOrg,
+        room
+    })
+    application
+        .save()
+        .then((application) => res.status(200).json(application))
+        .catch((error) => handleError(res, error))
+};
