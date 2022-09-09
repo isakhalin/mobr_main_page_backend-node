@@ -42,7 +42,7 @@ const applicationSchema = new Schema({
     },
     phoneNumberMobile: {
         type: String,
-        required: true,
+        required: false,
     },
     position: {
         type: String,

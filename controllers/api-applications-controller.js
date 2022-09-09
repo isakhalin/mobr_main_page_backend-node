@@ -27,27 +27,28 @@ export const postApplication = (req, res) => {
         middleName,
         org,
         phoneNumber,
-        phoneNumberMobile,
+        //phoneNumberMobile,
         position,
         prevOrg,
         room
     } = req.body;
-    const application = new Application({
-        dept,
-        firstName,
-        isComplete: false,
-        isMinobr,
-        lastName,
-        middleName,
-        org,
-        phoneNumber,
-        phoneNumberMobile,
-        position,
-        prevOrg,
-        room
-    })
-    application
-        .save()
+    // const application = new Application({
+    //     dept,
+    //     firstName,
+    //     isComplete: false,
+    //     isMinobr,
+    //     lastName,
+    //     middleName,
+    //     org,
+    //     phoneNumber,
+    //     //phoneNumberMobile,
+    //     position,
+    //     prevOrg,
+    //     room
+    // })
+
+    Application
+        .create({dept, firstName, isComplete: false, isMinobr, lastName, middleName, org, phoneNumber, position, prevOrg, room})
         .then((application) => res.status(200).json(application))
         .catch((error) => handleError(res, error))
 };
