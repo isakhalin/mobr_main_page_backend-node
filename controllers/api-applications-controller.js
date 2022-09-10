@@ -53,6 +53,7 @@ export const postApplication = (req, res) => {
         .catch((error) => handleError(res, error))
 };
 
+// Контроллер получает часть апликейшена в запросе и обновляет апликейшен а БД, возвращает измененный апликейшен
 export const updateApplication = (req, res) => {
     const {isComplete} = req.body;
     const id = req.params.id
