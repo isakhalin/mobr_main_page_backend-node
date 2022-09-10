@@ -21,7 +21,7 @@ mongoose
 
 // Мидлвар для парсинга входящего запроса из формы (данные в виде строк). Используется для получения данных из форм фронта
 app.use(express.urlencoded({extended: false}));
-// app.use(express.json());    // Мидлвара для обработки json
+app.use(express.json());    // Мидлвара для обработки json
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 app.use(express.static('build'));
 

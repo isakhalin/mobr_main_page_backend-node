@@ -53,12 +53,22 @@ export const postApplication = (req, res) => {
         .catch((error) => handleError(res, error))
 };
 
+export const updateApplication = (req, res) => {
+    const {isComplete} = req.body;
+    const id = req.params.id
+    Application
+        .findByIdAndUpdate(id, {isComplete}, {new: true})
+        .then((application) => res.status(200).json(application))
+        .catch((error) => handleError(res, error))
+};
+
 /**
  * Метод находит в БД апликейшен по его ID и удаляет его, возвращает на клиент ID удаленного апликейшена
  * @param req - Запрос от клиента
  * @param res - Ответ на клиент
  */
 export const deleteApplication = (req, res) => {
+
     Application
         .findByIdAndDelete(req.params.id)
         .then(() => res.status(200).json(req.params.id))
