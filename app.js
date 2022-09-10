@@ -5,7 +5,8 @@ import morgan from 'morgan';    // Подключаем библиотеку л�
 import cors from 'cors';
 import path from 'path';
 import {createPath} from "./helpers/create-path.js";
-import {router as applicationsApiRoutes} from './routes/api-applications-routes.js'
+import {router as applicationsApiRoutes} from './routes/api-applications-routes.js';
+import {router as profilesApiRoutes} from './routes/api-profiles-routes.js';
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use(cors({
 }));
 
 app.use(applicationsApiRoutes);
+app.use(profilesApiRoutes);
 
 //// app.get('/', (req, res) => {
 //     res.sendFile(createPath());

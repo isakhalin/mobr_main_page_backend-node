@@ -12,9 +12,9 @@ export const router = express.Router(); // Создаем экземпляр р�
 router.get('/api/allapplications', getAllApplications);
 
 // Передаем апликейшен в контроллер для его записи в БД
-router.post('/api/application', express.json(), postApplication);
+router.post('/api/application', postApplication);
 
-// Изменяем в апликейшене isComplete на true в БД
+// Изменяем в апликейшене флаг isComplete в БД
 router.patch('/api/application/:id', updateApplication);
 
 // Передаем апликейшен в контроллер для уго удаления из БД
