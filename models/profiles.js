@@ -13,7 +13,6 @@ const profileSchema = new Schema({
         type: String,
         required: false
     },
-    //date: {},
     dept:  {
         type: String,
         required: true

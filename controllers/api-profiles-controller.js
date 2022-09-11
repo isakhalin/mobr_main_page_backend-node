@@ -63,10 +63,11 @@ export const getProfiles = (req, res) => {
 
     Profile
         .findById(id) // Ищем юзера по id
-        .then((profile)=> {
-            if(profile?.isAdmin){  // Проверяем является ли пользователь админом
+        .then((profile) => {
+            if (profile?.isAdmin) {  // Проверяем является ли пользователь админом
                 Profile
                     .find()     // Находим все профили
+                    .sort({createdAt: -1})
                     .then((profiles) => res.status(200).json(profiles)) // Отдаем профили на клиент
                     .catch((error) => handleError(res, error))
             } else {
@@ -85,25 +86,29 @@ export const getProfile = (req, res) => {
     Profile
         .findOne({idFirebase: id})
         .then((profile) => {
-            const profileToSend = {
-                id: profile._id,
-                date: profile.createdAt,
-                firstName: profile.firstName,
-                lastName: profile.lastName,
-                middleName: profile.middleName,
-                dept: profile.dept,
-                isMinobr: profile.isMinobr,
-                isAdmin: profile.isAdmin,
-                org: profile.org,
-                prevOrg: profile.prevOrg,
-                phoneNumber: profile.phoneNumber,
-                phoneNumberMobile: profile.phoneNumberMobile,
-                position: profile.position,
-                room: profile.room,
-                email: profile.email,
-                avatar: profile.avatar,
+            if (profile) {
+                const profileToSend = {
+                    id: profile._id,
+                    date: profile.createdAt,
+                    firstName: profile.firstName,
+                    lastName: profile.lastName,
+                    middleName: profile.middleName,
+                    dept: profile.dept,
+                    isMinobr: profile.isMinobr,
+                    isAdmin: profile.isAdmin,
+                    org: profile.org,
+                    prevOrg: profile.prevOrg,
+                    phoneNumber: profile.phoneNumber,
+                    phoneNumberMobile: profile.phoneNumberMobile,
+                    position: profile.position,
+                    room: profile.room,
+                    email: profile.email,
+                    avatar: profile.avatar,
+                }
+                res.status(200).json(profileToSend);
+            } else {
+                res.status(200).json('Профиль не найден в базе');
             }
-            res.status(200).json(profileToSend);
         })
         .catch((error) => handleError(res, error))
 }
@@ -113,9 +118,10 @@ export const getProfile = (req, res) => {
  * @param res Ответ на клиент
  */
 export const updateProfile = (req, res) => {
-    const {part, id} = req.body;
+    const id = req.params.id;
+    const profile = req.body;
     Profile
-        .findByIdAndUpdate(id, {part}, {new: true})
+        .findByIdAndUpdate(id, profile, {new: true})
         .then((newProfile) => res.status(200).json(newProfile))
         .catch((error) => handleError(res, error))
 }
@@ -125,11 +131,11 @@ export const updateProfile = (req, res) => {
  * @param res Ответ на клиент
  */
 export const deleteProfile = (req, res) => {
-    const {id} = req.body;
+    const id = req.params.id;
     Profile
         .findByIdAndDelete(id)
         .then(() => res.status(200).json(id)) // Отправим на клиент ID удаленного профиля
-        .catch((error) => handleError(res.error)) // Обработаем ошибку, в случае недоступности БД
+        .catch((error) => handleError(res, error)) // Обработаем ошибку, в случае недоступности БД
 }
 
 
