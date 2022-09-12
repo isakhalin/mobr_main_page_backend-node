@@ -93,8 +93,7 @@ export const setTicket = (req, res) => {
             ticketText,
             userCompleted
         })
-        .then(() => {
-        })
+        .then((ticket) => res.status(200).json(ticket))
         .catch((error) => handleError(res, error))
 };
 
