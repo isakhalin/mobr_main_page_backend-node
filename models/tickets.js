@@ -3,6 +3,10 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 const ticketSchema = new Schema({
+    authorId: {
+        type: String,
+        required: true
+    },
     ticketAuthorFirstName: {
         type: String,
         required: true
