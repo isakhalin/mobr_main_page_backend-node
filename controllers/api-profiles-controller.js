@@ -14,6 +14,7 @@ const handleError = (res, error) => {
  * @param res Ответ на клиент
  */
 export const setProfile = (req, res) => {
+    console.log("!!!!!!", req.body);
     // Деструктуризируем входящие данные из req.body
     const {
         idFirebase,
@@ -132,6 +133,7 @@ export const updateProfile = (req, res) => {
  */
 export const deleteProfile = (req, res) => {
     const id = req.params.id;
+    console.log("ID PROFILE", id)
     Profile
         .findByIdAndDelete(id)
         .then(() => res.status(200).json(id)) // Отправим на клиент ID удаленного профиля

@@ -178,22 +178,29 @@ export const deleteTicket = async (req, res) => {
     }
 };
 
+/** Контроллер удаляет все тикеты пользователя от имени админа
+ * @param req
+ * @param res
+ * @returns {Promise<void>}
+ */
 export const deleteAllUserTickets = async (req, res) => {
-    const id = req.params.id;
+    const id = req.params.id;   // id отправителя запроса
     // Деструктурируем данные, получаем id пользователя, которого удалили, и переименовываем его в deletedUser
     const {_id: deletedUserTickets} = req.body;
-    const {isAdmin} = await getUserProfile(id);
-
     console.log("admin ID: ", id)
     console.log("deleting user ID: ", deletedUserTickets)
+    const {isAdmin} = await getUserProfile(id);
 
     try {
         if (isAdmin) {  // Если запрашивающий пользователь админ
             Ticket
                 .find({authorId: deletedUserTickets})  // Ищем все тикеты, автором которых является удаляемый пользователь
-                .then((userTickets) => userTickets.remove() // Удаляем найденные тикеты
-                    .then((deletedTickets) => res.status(200).json(deletedTickets)) // Возвращаем на клиент удаленный массив тикетов
-                )
+                .then((userTickets) => {
+                    console.log("Tickets to remove", userTickets);
+                    userTickets.map((ticket) => ticket.remove())
+                    res.status(200).json(userTickets);
+                }) // Удаляем найденные тикеты
+                //.then((deletedTickets) => res.status(200).json(deletedTickets)) // Возвращаем на клиент удаленный массив тикетов
                 .catch((error) => handleError(res, error))
         } else {
             handleError(res, {message: 'Отказано в доступе'})
