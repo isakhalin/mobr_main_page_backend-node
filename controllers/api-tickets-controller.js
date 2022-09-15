@@ -54,42 +54,52 @@ export const getAllTickets = async (req, res) => {
     }
 };
 
-export const getTicket = (req, res) => {
-    const userId = req.params.uid;       // id пользователя
+/** Контроллер находит указанный тикет по ID.
+ * @param req Запрос от клиента
+ * @param res Ответ на клиент
+ */
+export const getTicket = async (req, res) => {
+    const userId = req.params.uid;     // id пользователя
     const ticketId = req.params.tid;   // id тикета
+
+    // Получаем профиль пользователя по id, деструктуризируем данные - достаем свойство isAdmin => 'true'/'false'
+    const senderProfile = await getUserProfile(userId); // Проверяем является ли отправитель админом
+
     Ticket
-        .findById(tid)
-        .then((ticket) => res.status(200).json(ticket))
-        .catch((error) => handleError(res, error))
+        .findById(ticketId) // Ищем в БД тикет по его id, который пришел в запросе
+        .then((ticket) => {
+                if (senderProfile.isAdmin) {
+                    res.status(200).json(ticket);           // Если пользователь админ, то просто отдаем тикет
+                } else if (ticket.authorId === userId) {    // Если не админ, то проверяем пользователя ли это тикет
+                    res.status(200).json(ticket)            // Если тикет этого пользователя, то отдаем тикет
+                } else {
+                    throw 'В доступен отказано' // Иначе выбрасываем исключение. Обработается в следующем catch
+                }
+            }
+        )
+        .catch((error) => handleError(res, error)); // Обработчик исключений.
+}
 
-    // const ticketsToSend = {
-    //     ticketAuthorFirstName: "Роман",
-    //     ticketAuthorLastName: "Степанов",
-    //     //ticketDate: ticket,
-    //     ticketExecutor: "Не назначен",
-    //     ticketImportance: "low",
-    //     ticketStatus: "В работе",
-    //     ticketText: "Новая таска",
-    //     userCompleted: false,
-    // }
-    // res.status(200).json(ticketsToSend)
-};
-
+// todo Дописать документацию
+/** Контроллер записывает в БД новый тикет
+ * @param req Запрос от клиента
+ * @param res Ответ на клиент
+ */
 export const setTicket = (req, res) => {
     const id = req.params.id;   // MongoDB id пользователя, который отправил запрос
 
-
+    // Парсим данные из тела запроса
     const {
-        ticketAuthorFirstName,
-        ticketAuthorLastName,
-        ticketExecutor,
-        ticketImportance,
-        ticketStatus,
-        ticketText,
-        userCompleted
+        ticketAuthorFirstName,  //
+        ticketAuthorLastName,   //
+        ticketExecutor,         // В ticketExecutor приходит ФИО исполнителя тикета => 'Петров Иван Алексеевич'
+        ticketImportance,       //
+        ticketStatus,           // В ticketStatus приходит статус выполнения тикета => 'completed'/'processed'
+        ticketText,             //
+        userCompleted           // В userCompleted приходят данные о завершении тикета => 'true'/'false'
     } = req.body;
     Ticket
-        .create({
+        .create({                   // Создаем тикет в БД, используя модель данных.
             authorId: id,
             ticketAuthorFirstName,
             ticketAuthorLastName,
@@ -99,36 +109,42 @@ export const setTicket = (req, res) => {
             ticketText,
             userCompleted
         })
-        .then((ticket) => res.status(200).json(ticket))
+        .then((ticket) => res.status(200).json(ticket)) // Отправляем на клиент сохраненный тикет
         .catch((error) => handleError(res, error))
 };
 
+/** Контроллер обновляет в БД заданный тикет.
+ * @param req Запрос от клиента
+ * @param res Ответ на клиент
+ * @returns {Promise<void>}
+ */
 export const updateTicket = async (req, res) => {
-    const id = req.params.id;   // id пользователя, который отправил запрос
+    const id = req.params.id;   // id пользователя, который отправил запрос на обновление тикета
+
+    // Парсим данные из тела запроса
     const {
-        ticketExecutor,
-        ticketStatus,
-        userCompleted,
-        _id
-    } = req.body;   // Читаем данные из тела запроса
+        ticketExecutor,     // В ticketExecutor приходит ФИО исполнителя тикета => 'Петров Иван Алексеевич'
+        ticketStatus,       // В ticketStatus приходит статус выполнения тикета => 'completed'/'processed'
+        userCompleted,      // В userCompleted приходят данные о завершении тикета => 'true'/'false'
+        _id                 // В _id приходит id самого тикета
+    } = req.body;
 
-    console.log("ID User", id);
-    console.log("BODY", {_id, ticketExecutor, ticketStatus, userCompleted})
-
+    // Используем конструкцию try-catch для обработки исключений, которые могут возникнуть при работе с БД
     try {
-        // Получаем профиль пользователя и деструктуризируем данные, достаем свойство isAdmin и _id, переименовываем его в userId
-        const {isAdmin} = await getUserProfile(id);
+        // Получаем профиль пользователя по id, деструктуризируем данные - достаем свойство isAdmin => 'true'/'false'
+        const {isAdmin} = await getUserProfile(id); // Проверяем является ли отправитель админом
         if (isAdmin) {
             Ticket
+                // Ищем тикет по id и обновляем его.
+                // Первый аргумент id - параметр поиска.
+                // Второй аргумент - объект которым заменяем (заменяются только указанные свойства)
+                // Третий аргумент - опция {new: true}, возвращает новый объект, вместо старого
                 .findByIdAndUpdate(_id, {ticketExecutor, ticketStatus, userCompleted}, {new: true})
-                .then((updatedTicket) => {
-                    res.status(200).json(updatedTicket)
-                })
-                .catch((error) => handleError(res, error))
+                .then((updatedTicket) => res.status(200).json(updatedTicket))   // Отправляем статус и ответ на клиент
+                .catch((error) => handleError(res, error))  // Обаботчик исключений
         } else {
-            // _id это идентификатор тикета
             Ticket
-                .findById(_id)
+                .findById(_id) // Ищем в БД тикет по _id, который пришел в запросе
                 .then((ticket) => {
                     // Если id автора поста из тикета в БД совпадает с id пользователя из запроса с фронта
                     if (ticket.authorId === id) {
@@ -137,75 +153,88 @@ export const updateTicket = async (req, res) => {
                             .then((updatedTicket) => res.status(200).json(updatedTicket))
                             .catch((error) => handleError(res, error))
                     } else {
+                        // Выбрасываем исключение. Оно обработается в catch следующего шага цепочки чейнинга.
                         throw 'Отказано в доступе на изменение тикета.'
                     }
                 })
-                .catch((error) => {
-                    handleError(res, {message: error})
-                })
+                // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+                // {message: 'Отказано в доступе'} это объект с текстом ошибки, т.к. в обработчике мы читаем error.message
+                .catch((error) => handleError(res, {message: error}));
         }
-    } catch (error) {
-        handleError(res, error);
+    } catch (e) {
+        // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+        handleError(res, e);
     }
 };
 
-/** Удаление тикета от имени администратора
+/** Контроллер удаляет из БД указанный тикет от имени администратора.
  * @param req Запрос от клиента
  * @param res Ответ на клиент
  * @returns {Promise<void>}
  */
 export const deleteTicket = async (req, res) => {
-    // console.log("Start time", new Date().getTime());
-    // console.log("End time", new Date().getTime());
     const id = req.params.id;   // id отправителя запроса
-    // Деструктурируем данные из бади, достаем id тикета, который нужно удалить
-    const {_id} = req.body;
+    const {_id} = req.body; // Деструктурируем данные из бади - достаем id тикета, который нужно удалить
 
+    // Используем конструкцию try-catch для обработки исключений, которые могут возникнуть при работе с БД
     try {
+        // Получаем профиль пользователя по id, деструктуризируем данные - достаем свойство isAdmin => 'true'/'false'
         const {isAdmin} = await getUserProfile(id); // Проверяем является ли отправитель админом
         if (isAdmin) {
             Ticket
-                .findById(_id)
-                .then((ticket) => ticket.remove()
-                    .then((ticket) => res.status(200).json(ticket))
+                .findById(_id)  // Ищем в БД тикет по _id, который пришел в запросе
+                .then((ticket) => ticket.deleteOne()   // Удаляем найденный тикет. В ticket падает найденный выше эл-т
+                    .then((ticket) => res.status(200).json(ticket)) // Если тикет не найден, обрабатываем исключение
                 )
                 .catch((error) => handleError(res, error))
         } else {
+            // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+            // {message: 'Отказано в доступе'} это объект с текстом ошибки, т.к. в обработчике мы читаем error.message
             handleError(res, {message: 'Отказано в доступе'});
         }
-    } catch (error) {
-        handleError(res, error)
+    } catch (e) {
+        // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+        handleError(res, e)
     }
 };
 
-/** Контроллер удаляет все тикеты пользователя от имени админа
- * @param req
- * @param res
+/** Контроллер удаляет все тикеты пользователя от имени админа.
+ * @param req Запрос от клиента
+ * @param res Ответ на клиент
  * @returns {Promise<void>}
  */
 export const deleteAllUserTickets = async (req, res) => {
-    const id = req.params.id;   // id отправителя запроса
-    // Деструктурируем данные, получаем id пользователя, которого удалили, и переименовываем его в deletedUser
-    const {_id: deletedUserTickets} = req.body;
-    console.log("admin ID: ", id)
-    console.log("deleting user ID: ", deletedUserTickets)
-    const {isAdmin} = await getUserProfile(id);
+    // senderUserId - id MongoBD отправителя
+    // targetUserId - id MongoBD пользователя, тикеты которого нужно удалить
+    const {senderUserId, targetUserId} = req.params;   // id отправителя запроса
+    const {isAdmin} = await getUserProfile(senderUserId); // Проверка админ ли пользователь. Используем деструктуризацию
 
     try {
         if (isAdmin) {  // Если запрашивающий пользователь админ
             Ticket
-                .find({authorId: deletedUserTickets})  // Ищем все тикеты, автором которых является удаляемый пользователь
-                .then((userTickets) => {
-                    console.log("Tickets to remove", userTickets);
-                    userTickets.map((ticket) => ticket.remove())
-                    res.status(200).json(userTickets);
-                }) // Удаляем найденные тикеты
-                //.then((deletedTickets) => res.status(200).json(deletedTickets)) // Возвращаем на клиент удаленный массив тикетов
-                .catch((error) => handleError(res, error))
+                //// Реализация без возврата удаленных тикетов на клиент
+                .deleteMany({authorId: targetUserId})   // Удаляем из БД все тикеты, найденные по свойству authorId
+                .then((deleteResult) => res.end()) // Закрываем соединение и отдаем управление браузеру через res.end()
+                .catch((error) => handleError(res, error));
+            // //// Реализация с возвратом тикетов на клиент. Если на клиенте нужны будут удаленные тикеты.
+            // .find({authorId: targetUserId})  // Ищем все тикеты, автором которых является удаляемый пользователь
+            // .then((userTickets) => {
+            //     userTickets.map((ticket) => ticket.deleteOne()); // Удаляем найденные тикеты
+            //     console.log("Tickets to remove", userTickets);
+            //     res.status(200).json(userTickets);
+            // })
+            // .catch((error) => handleError(res, error))
         } else {
-            handleError(res, {message: 'Отказано в доступе'})
+            // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+            // {message: 'Отказано в доступе'} это объект с текстом ошибки, т.к. в обработчике мы читаем error.message
+            handleError(res, {message: 'Отказано в доступе'});
         }
     } catch (e) {
-        handleError(res, e)
+        // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+        handleError(res, e);
     }
 }
+
+//// Логгер для измерения производительности
+// console.log("Start time", new Date().getTime());
+// console.log("End time", new Date().getTime());

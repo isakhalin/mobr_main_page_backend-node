@@ -1,4 +1,6 @@
 import express from 'express';
+
+// Подключение контроллеров
 import {
     getAllApplications,
     postApplication,
@@ -19,9 +21,3 @@ router.patch('/api/application/:id', updateApplication);
 
 // Передаем апликейшен в контроллер для уго удаления из БД
 router.delete('/api/application/:id', deleteApplication);
-
-
-// router.get('/api/test', (req, res) => {
-//     res.status(200).json({msg: 'This is CORS-enabled for a whitelisted domain.'});
-//     res.end();
-// });
