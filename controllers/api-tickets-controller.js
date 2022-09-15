@@ -1,7 +1,7 @@
 import {Ticket} from '../models/tickets.js'
 import {Profile} from "../models/profiles.js";
 
-/** Обработчик ошибок
+/** Обработчик исключений
  * @param res Ссылка на метод отправки ответа клиенту
  * @param error Отправляемая ошибка
  */
@@ -10,31 +10,27 @@ const handleError = (res, error) => {
     res.status(500).json(error.message);
 };
 
-/** Функция проверяет является ли пользователь админом. Возвращает true если пользователь является админом
- *  и false если пользователь не является админом
- * @param id Идентификатор пользователя в MongoDB
- * @returns {Promise<any>} true - если пользователь админ, false - если пользователь не админ
+// TODO Возможно нужно перенести в контроллер профилей
+/** Метод возвращает указанный профиль пользователя из БД
+ * @param id id пользователя
+ * @returns {Promise<any>}
  */
-const userIsAdmin = async (id) => {
-    return await Profile
-        .findById(id)
-        .then((profile) => profile?.isAdmin)
-}
-
 const getUserProfile = async (id) => {
     return await Profile
         .findById(id)
         .then((userProfile) => userProfile)
 }
 
-/** Возвращает все тикеты на клиент
+/** Контроллер возвращает все тикеты на клиент
  * @param req Запрос от клиента
  * @param res Ответ на клиент
  */
 export const getAllTickets = async (req, res) => {
-    const id = req.params.id; // MongoDB id пользователя
+    const id = req.params.id; // MongoDB id пользователя, который отправил запрос
 
+    // Используем конструкцию try-catch для обработки исключений, которые могут возникнуть при работе с БД
     try {
+        // Получаем профиль пользователя по id, деструктуризируем данные - достаем свойство isAdmin => 'true'/'false'
         const {isAdmin} = await getUserProfile(id);
         if (isAdmin) {
             Ticket
@@ -44,12 +40,13 @@ export const getAllTickets = async (req, res) => {
                 .catch((error) => handleError(res, error))  // Если возникла ошибка, обрабатываем
         } else {
             Ticket
-                .find({authorId: id}) // Находим только его тикеты
+                .find({authorId: id}) // Находим тикеты только этого пользователя
                 .sort({createdAt: -1})  // Сортируем по дате от большего к меньшему
                 .then((tickets) => res.status(200).json(tickets))   // Отдаем тикеты
                 .catch((error) => handleError(res, error))  // Если возникла ошибка, обрабатываем
         }
     } catch (error) {
+        // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
         handleError(res, error);
     }
 };
@@ -59,25 +56,30 @@ export const getAllTickets = async (req, res) => {
  * @param res Ответ на клиент
  */
 export const getTicket = async (req, res) => {
-    const userId = req.params.uid;     // id пользователя
+    const userId = req.params.uid;     // MongoDB id пользователя, который отправил запрос
     const ticketId = req.params.tid;   // id тикета
 
-    // Получаем профиль пользователя по id, деструктуризируем данные - достаем свойство isAdmin => 'true'/'false'
-    const senderProfile = await getUserProfile(userId); // Проверяем является ли отправитель админом
-
-    Ticket
-        .findById(ticketId) // Ищем в БД тикет по его id, который пришел в запросе
-        .then((ticket) => {
-                if (senderProfile.isAdmin) {
-                    res.status(200).json(ticket);           // Если пользователь админ, то просто отдаем тикет
-                } else if (ticket.authorId === userId) {    // Если не админ, то проверяем пользователя ли это тикет
-                    res.status(200).json(ticket)            // Если тикет этого пользователя, то отдаем тикет
-                } else {
-                    throw 'В доступен отказано' // Иначе выбрасываем исключение. Обработается в следующем catch
+    // Используем конструкцию try-catch для обработки исключений, которые могут возникнуть при работе с БД
+    try {
+        // Получаем профиль пользователя по id, деструктуризируем данные - достаем свойство isAdmin => 'true'/'false'
+        const {isAdmin} = await getUserProfile(userId); // Проверяем является ли отправитель админом
+        Ticket
+            .findById(ticketId) // Ищем в БД тикет по его id, который пришел в запросе
+            .then((ticket) => {
+                    if (isAdmin) {
+                        res.status(200).json(ticket);           // Если пользователь админ, то просто отдаем тикет
+                    } else if (ticket.authorId === userId) {    // Если не админ, то проверяем пользователя ли это тикет
+                        res.status(200).json(ticket)            // Если тикет этого пользователя, то отдаем тикет
+                    } else {
+                        throw {message: 'В доступен отказано'}  // Иначе выбрасываем исключение. Обработается в следующем catch
+                    }
                 }
-            }
-        )
-        .catch((error) => handleError(res, error)); // Обработчик исключений.
+            ) // TODO Проверить, возможно тут не нужен кетч и сработает вышестоящий
+            .catch((error) => handleError(res, error)); // Обработчик исключений.
+    } catch (e) {
+        // Обработчик исключений. res - ссылка на response клиента. Которую мы используем для отправки ответа
+        handleError(res, r)
+    }
 }
 
 // todo Дописать документацию
@@ -90,12 +92,12 @@ export const setTicket = (req, res) => {
 
     // Парсим данные из тела запроса
     const {
-        ticketAuthorFirstName,  //
-        ticketAuthorLastName,   //
+        ticketAuthorFirstName,  // В ticketAuthorFirstName приходит имя автора тикета
+        ticketAuthorLastName,   // В ticketAuthorLastName приходит фамилия автора тикета
         ticketExecutor,         // В ticketExecutor приходит ФИО исполнителя тикета => 'Петров Иван Алексеевич'
-        ticketImportance,       //
+        ticketImportance,       // todo
         ticketStatus,           // В ticketStatus приходит статус выполнения тикета => 'completed'/'processed'
-        ticketText,             //
+        ticketText,             // В ticketText приходит текст задачи тикета
         userCompleted           // В userCompleted приходят данные о завершении тикета => 'true'/'false'
     } = req.body;
     Ticket
@@ -207,9 +209,10 @@ export const deleteAllUserTickets = async (req, res) => {
     // senderUserId - id MongoBD отправителя
     // targetUserId - id MongoBD пользователя, тикеты которого нужно удалить
     const {senderUserId, targetUserId} = req.params;   // id отправителя запроса
-    const {isAdmin} = await getUserProfile(senderUserId); // Проверка админ ли пользователь. Используем деструктуризацию
 
     try {
+        // Проверка админ ли пользователь. Используем деструктуризацию
+        const {isAdmin} = await getUserProfile(senderUserId);
         if (isAdmin) {  // Если запрашивающий пользователь админ
             Ticket
                 //// Реализация без возврата удаленных тикетов на клиент

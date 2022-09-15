@@ -83,7 +83,7 @@ export const getProfiles = (req, res) => {
  * @param res Ответ на клиент
  */
 export const getProfile = (req, res) => {
-    const id = req.params.id;
+    const id = req.params.id;   // Firebase id пользователя с клиента
     Profile
         .findOne({idFirebase: id})
         .then((profile) => {
