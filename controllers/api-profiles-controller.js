@@ -5,7 +5,6 @@ import {Profile} from '../models/profiles.js'
  * @param error Принимает содержание ошибки, которое нужно отправить на клиент
  */
 const handleError = (res, error) => {
-    console.log("Something went WRONG!", error);
     res.status(500).json(error.message)
 };
 
@@ -14,23 +13,20 @@ const handleError = (res, error) => {
  * @param res Ответ на клиент
  */
 export const setProfile = (req, res) => {
-    console.log("!!!!!!", req.body);
-    // Деструктуризируем входящие данные из req.body
     const {
         idFirebase,
-        avatar,             // not required
+        avatar,
         dept,
         email,
         firstName,
-        //isAdmin,
         isMinobr,
         lastName,
-        middleName,         // not required
+        middleName,
         org,
-        phoneNumber,        // not required
-        phoneNumberMobile,  // not required
+        phoneNumber,
+        phoneNumberMobile,
         position,
-        prevOrg,            // not required
+        prevOrg,
         room
     } = req.body;
     Profile
@@ -60,19 +56,19 @@ export const setProfile = (req, res) => {
  * @param res Ответ на клиент
  */
 export const getProfiles = (req, res) => {
-    const id = req.params.id; // id пользователя из параметров запроса с клиента
+    const id = req.params.id;
 
     Profile
-        .findById(id) // Ищем юзера по id
+        .findById(id)
         .then((profile) => {
-            if (profile?.isAdmin) {  // Проверяем является ли пользователь админом
+            if (profile?.isAdmin) {
                 Profile
-                    .find()     // Находим все профили
+                    .find()
                     .sort({createdAt: -1})
-                    .then((profiles) => res.status(200).json(profiles)) // Отдаем профили на клиент
+                    .then((profiles) => res.status(200).json(profiles))
                     .catch((error) => handleError(res, error))
             } else {
-                res.status(200).send('Permission denied! Go away...');  // Если запрашивает не админ, отказываем.
+                res.status(200).send('Permission denied! Go away...');
             }
         })
         .catch((error) => handleError(res, error))
@@ -83,7 +79,7 @@ export const getProfiles = (req, res) => {
  * @param res Ответ на клиент
  */
 export const getProfile = (req, res) => {
-    const id = req.params.id;   // Firebase id пользователя с клиента
+    const id = req.params.id;
     Profile
         .findOne({idFirebase: id})
         .then((profile) => {
@@ -133,11 +129,10 @@ export const updateProfile = (req, res) => {
  */
 export const deleteProfile = (req, res) => {
     const id = req.params.id;
-    console.log("ID PROFILE", id)
     Profile
         .findByIdAndDelete(id)
-        .then(() => res.status(200).json(id)) // Отправим на клиент ID удаленного профиля
-        .catch((error) => handleError(res, error)) // Обработаем ошибку, в случае недоступности БД
+        .then(() => res.status(200).json(id))
+        .catch((error) => handleError(res, error))
 }
 
 

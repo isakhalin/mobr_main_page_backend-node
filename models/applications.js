@@ -1,14 +1,7 @@
-// 1. Подключаем мангус
-// 2. Создаем конструктор схемы из объекта мангус
-// 3. Создаем объект схемы с помощью конструктора схемы
-// 4. Создаем модель на основе объекта схемы
-
-// Достаем конструктор схемы из монгуса
 import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
 
-//Создаем объект схемы конструктором Schema из монгуса
 const applicationSchema = new Schema({
     dept: {
         type: String,
@@ -60,5 +53,4 @@ const applicationSchema = new Schema({
     },
 }, {timestamps: true});
 
-// Создаем модель. Принимаем имя модели, объект схемы и имя коллекции (с этим именем будет создана коллекция в БД)
 export const Application = mongoose.model('Application', applicationSchema);

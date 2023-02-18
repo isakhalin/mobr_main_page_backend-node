@@ -1,6 +1,6 @@
 import express from 'express';
 
-// Подключение контроллеров
+// Контроллеры
 import {
     setProfile,
     getProfiles,
